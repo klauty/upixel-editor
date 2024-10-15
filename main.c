@@ -55,3 +55,4 @@ void SDL_AppQuit(void *appstate)
 {
     /* SDL will clean up the window/renderer for us. */
 }
+
