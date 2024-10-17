@@ -11,7 +11,33 @@ float mouseX = 0;
 float mouseY = 0;
 SDL_FPoint mousePoint;
 
+SDL_Color primaryWhiteColor = {
+    .r = 238,
+    .g = 238,
+    .b = 238,
+    .a = 255
+};
 
+SDL_Color secondaryGrayColor = {
+    .r = 104,
+    .g = 109,
+    .b = 118,
+    .a = 255
+};
+
+SDL_Color darkGrayColor = {
+    .r = 55,
+    .g = 58,
+    .b = 64,
+    .a = 255
+};
+
+SDL_Color activeOrangeColor = {
+    .r = 220,
+    .g = 95,
+    .b = 0,
+    .a = 255
+};
 
 /* This function runs once at startup. */
 int SDL_AppInit(void **appstate, int argc, char *argv[])
@@ -59,15 +85,15 @@ int SDL_AppIterate(void *appstate)
     rectToolBar.w = 50;
 	
 	/* cor de fundo */
-    SDL_SetRenderDrawColor(renderer, 104, 109, 118, 255);
+    SDL_SetRenderDrawColor(renderer, secondaryGrayColor.r, secondaryGrayColor.g, secondaryGrayColor.b, secondaryGrayColor.a);
     SDL_RenderClear(renderer);
 
     // desenha fundo barra de ferramentas
-    SDL_SetRenderDrawColor(renderer, 55, 58, 64, 255);
+    SDL_SetRenderDrawColor(renderer, darkGrayColor.r, darkGrayColor.g, darkGrayColor.b, darkGrayColor.a);
     SDL_RenderFillRect(renderer,&rectToolBar);
 
     // desenha o canvas para o pixel-art, a area de desenho vai ter 32x32 para testes  
-    SDL_SetRenderDrawColor(renderer, 238, 238, 238, 255);
+    SDL_SetRenderDrawColor(renderer, primaryWhiteColor.r, primaryWhiteColor.g, primaryWhiteColor.b, primaryWhiteColor.a);
     rect.x = 200; 
     rect.y = 100;
     rect.w = 280;
@@ -77,7 +103,7 @@ int SDL_AppIterate(void *appstate)
     //desenha o cursor do mouse
     mouseCursor.x = mousePoint.x;
     mouseCursor.y = mousePoint.y;
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    SDL_SetRenderDrawColor(renderer, activeOrangeColor.r, activeOrangeColor.g, activeOrangeColor.b, activeOrangeColor.a );
     SDL_RenderFillRect(renderer,&mouseCursor);
 
     SDL_RenderPresent(renderer);  /* put it all on the screen! */
