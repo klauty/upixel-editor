@@ -28,6 +28,7 @@ SDL_FRect mouseCursor;
 float mouseX = 0;
 float mouseY = 0;
 SDL_FPoint mousePoint;
+SDL_MouseButtonFlags mouseButtonsState;
 
 struct Pixel canvas[32][32];
 
@@ -73,12 +74,52 @@ SDL_Color activeOrangeColor = {
     .a = 255
 };
 
-SDL_Color activePalletColor = {
+SDL_Color primaryActivePalletColor = {
     .r = 100,
     .g = 0,
     .b = 0,
     .a = 255
 };
+
+SDL_Color secondaryActivePalletColor = {
+    .r = 0,
+    .g = 0,
+    .b = 100,
+    .a = 255
+};
+
+void fillCanvasAlternate(){
+    int flag = 0;
+    for(int y = 0; y < 32; y+=1 ){
+        for(int x = 0; x < 32; x+=1 ){
+            canvas[x][y].rect.x = (x * 10)+rect.x;
+            canvas[x][y].rect.y = (y * 10)+rect.y;
+            canvas[x][y].rect.h = 10;
+            canvas[x][y].rect.w = 10;
+            if(flag){
+                canvas[x][y].color = primaryCanvasColor;
+            }else{
+                canvas[x][y].color = secondaryCanvasColor;
+                canvas[x][y].color.a = 128;
+            }
+            flag = !flag;
+        }
+        flag = !flag;
+    }
+}
+
+void fillCanvasColor(SDL_Color color){
+    int flag = 0;
+    for(int y = 0; y < 32; y+=1 ){
+        for(int x = 0; x < 32; x+=1 ){
+            canvas[x][y].rect.x = (x * 10)+rect.x;
+            canvas[x][y].rect.y = (y * 10)+rect.y;
+            canvas[x][y].rect.h = 10;
+            canvas[x][y].rect.w = 10;
+            canvas[x][y].color = color;
+        }
+    }
+}
 
 /* This function runs once at startup. */
 int SDL_AppInit(void **appstate, int argc, char *argv[])
@@ -104,25 +145,8 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
     }
     
     mouseCursor.w = mouseCursor.h = 20;
-    int flag = 0;
-    for(int y = 0; y < 32; y+=1 ){
-        for(int x = 0; x < 32; x+=1 ){
-            canvas[x][y].rect.x = (x * 10)+rect.x;
-            canvas[x][y].rect.y = (y * 10)+rect.y;
-            canvas[x][y].rect.h = 10;
-            canvas[x][y].rect.w = 10;
-            if(flag){
-                canvas[x][y].color = primaryCanvasColor;
-            }else{
-                canvas[x][y].color = secondaryCanvasColor;
-                canvas[x][y].color.a = 128;
-            }
-            flag = !flag;
-        }
-        flag = !flag;
-    }
-
-
+    fillCanvasColor(primaryWhiteColor);
+    
     return SDL_APP_CONTINUE;  /* carry on with the program! */
 }
 
@@ -133,8 +157,9 @@ int SDL_AppEvent(void *appstate, const SDL_Event *event)
         return SDL_APP_SUCCESS;  /* end the program, reporting success to the OS. */
     }
 
+    
+    mouseButtonsState = SDL_GetMouseState(&mousePoint.x,&mousePoint.y);
     if(event->type == SDL_EVENT_MOUSE_MOTION){
-        SDL_GetMouseState(&mousePoint.x,&mousePoint.y);
 
         //SDL_Log("x %f,y %f ",mouseX, mouseY);
     }
@@ -163,6 +188,13 @@ int SDL_AppIterate(void *appstate)
             
             if(SDL_PointInRectFloat(&mousePoint,&canvas[x][y].rect)){
                 SDL_SetRenderDrawColor(renderer, activeOrangeColor.r, activeOrangeColor.g, activeOrangeColor.b, activeOrangeColor.a);
+                if (mouseButtonsState == SDL_BUTTON_LEFT ){
+                    canvas[x][y].color = primaryActivePalletColor;
+                }
+
+                if (mouseButtonsState-1 == SDL_BUTTON_RIGHT ){
+                    canvas[x][y].color = secondaryActivePalletColor;
+                }
 
             }else{
                 SDL_SetRenderDrawColor(renderer, canvas[x][y].color.r, canvas[x][y].color.g, canvas[x][y].color.b, canvas[x][y].color.a);
@@ -171,7 +203,6 @@ int SDL_AppIterate(void *appstate)
             SDL_RenderFillRect(renderer,&canvas[x][y].rect);
         }
     }
-
 
     SDL_RenderPresent(renderer);  /* put it all on the screen! */
     return SDL_APP_CONTINUE;  /* carry on with the program! */
