@@ -17,11 +17,21 @@ typedef struct Pixel
     SDL_Color color;
 }Pixel;
 
+enum Tools {
+    PEN,
+    BUCKET,
+    CIRCLE,
+    SQUARE,
+    LINE,
+    PIKER
+};
+
+enum  Tools activeTool = PEN;
 
 /* We will use this renderer to draw into this window every frame. */
 static SDL_Renderer *renderer = NULL;
 static SDL_Window *window = NULL;
-SDL_FRect rect;
+SDL_FRect canvasPosition;
 SDL_FRect rectToolBar;
 
 SDL_FRect mouseCursor;
@@ -90,12 +100,45 @@ SDL_Color activeOrangeColor = {
     .a = 255
 };
 
+
+SDL_Color palletRed = {
+    .r = 255,
+    .g = 0,
+    .b = 77,
+    .a = 255
+};
+
+SDL_Color palletOrange = {
+    .r = 255,
+    .g = 163,
+    .b = 0,
+    .a = 255
+};
+
+SDL_Color endesga16[] = {
+                       {.r = 0, .g = 0, .b = 0, .a = 255},
+                       {.r = 29, .g = 43, .b = 83, .a = 255},
+                       {.r = 126, .g = 37, .b = 83, .a = 255},
+                       {.r = 0, .g = 135, .b = 81, .a = 255},
+                       {.r = 171, .g = 82, .b = 54, .a = 255},
+                       {.r = 95, .g = 87, .b = 79, .a = 255},
+                       {.r = 194, .g = 195, .b = 199, .a = 255},
+                       {.r = 255, .g = 241, .b = 232, .a = 255},
+                       {.r = 255, .g = 0, .b = 77, .a = 255},
+                       {.r = 255, .g = 163, .b = 0, .a = 255},
+                       {.r = 255, .g = 236, .b = 39, .a = 255},
+                       {.r = 0, .g = 228, .b = 54, .a = 255},
+                       {.r = 41, .g = 173, .b = 255, .a = 255},
+                       {.r = 131, .g = 118, .b = 156, .a = 255},
+                       {.r = 255, .g = 119, .b = 168, .a = 255},
+                       {.r = 255, .g = 204, .b = 170, .a = 255},};
+
 void fillCanvasAlternate(){
     int flag = 0;
     for(int y = 0; y < 32; y+=1 ){
         for(int x = 0; x < 32; x+=1 ){
-            canvas[x][y].rect.x = (x * 10)+rect.x;
-            canvas[x][y].rect.y = (y * 10)+rect.y;
+            canvas[x][y].rect.x = (x * 10.01)+canvasPosition.x;
+            canvas[x][y].rect.y = (y * 10.01)+canvasPosition.y;
             canvas[x][y].rect.h = 10;
             canvas[x][y].rect.w = 10;
             if(flag){
@@ -114,65 +157,68 @@ void fillCanvasColor(SDL_Color color){
     int flag = 0;
     for(int y = 0; y < 32; y+=1 ){
         for(int x = 0; x < 32; x+=1 ){
-            canvas[x][y].rect.x = (x * 10)+rect.x;
-            canvas[x][y].rect.y = (y * 10)+rect.y;
-            canvas[x][y].rect.h = 10;
-            canvas[x][y].rect.w = 10;
+            //0.01 de padding para garantir somente 1 pixel esta sobre o mouse
+            canvas[x][y].rect.x = (x * 20.01)+canvasPosition.x;
+            canvas[x][y].rect.y = (y * 20.01)+canvasPosition.y;
+            canvas[x][y].rect.h = 20;
+            canvas[x][y].rect.w = 20;
             canvas[x][y].color = color;
         }
     }
 }
 
-/*TODO - iniciar as cores da paleta baseada em parâmetro*/
-void initPallet(SDL_FRect *toolBar){
+void initPallet(SDL_FRect *toolBar, SDL_Color *colors){
+    int index = 0;
     for(int y = 0; y < 8; y+=1 ){
         for(int x = 0; x <= 1; x+=1 ){
-                colorPallet[x][y].rect.x =(x*17)+toolBar->x+10;
-                colorPallet[x][y].rect.y =(y*17)+toolBar->y+80;
-                colorPallet[x][y].rect.w = 15;
-                colorPallet[x][y].rect.h = 15;
-                colorPallet[x][y].color.r = 100;
-                colorPallet[x][y].color.g = 0;
-                colorPallet[x][y].color.b = 0;
-                colorPallet[x][y].color.a = 255;
-                SDL_Log("x%f , y%f",colorPallet[x][y].rect.x,colorPallet[x][y].rect.y);
+                colorPallet[x][y].rect.x =(x*23)+toolBar->x+15;
+                colorPallet[x][y].rect.y =(y*23)+toolBar->y+80;
+                colorPallet[x][y].rect.w = 20;
+                colorPallet[x][y].rect.h = 20;
+                colorPallet[x][y].color = colors[index];
+                index += 1;
+                //SDL_Log("x%f , y%f",colorPallet[x][y].rect.x,colorPallet[x][y].rect.y);
         }
     }
+
+   
 }
 
 /* This function runs once at startup. */
 int SDL_AppInit(void **appstate, int argc, char *argv[])
 {
-    rect.x = 200; 
-    rect.y = 100;
-    rect.w = 320;
-    rect.h = 320;
+    canvasPosition.x = 200; 
+    canvasPosition.y = 100;
+    // rect.w = 320;
+    // rect.h = 320;
 
     rectToolBar.x = 0;
     rectToolBar.y = 0;
     rectToolBar.h = 300;
-    rectToolBar.w = 50;
+    rectToolBar.w = 70;
     mouseCursor.w = mouseCursor.h = 20;
+    initPallet(&rectToolBar,endesga16);
 
     //posiciona os indicadores de cor primaria e secundaria
     primaryActivePalletColor.rect.x = rectToolBar.x + 10;
     primaryActivePalletColor.rect.y = rectToolBar.y + 10;
-    primaryActivePalletColor.rect.h = 40;
-    primaryActivePalletColor.rect.w = 40;
+    primaryActivePalletColor.rect.h = 30;
+    primaryActivePalletColor.rect.w = 30;
+    primaryActivePalletColor.color = colorPallet[0][0].color;
 
-    secondaryActivePalletColor.rect.x = primaryActivePalletColor.rect.x + 20;
-    secondaryActivePalletColor.rect.y = primaryActivePalletColor.rect.y + 20;
-    secondaryActivePalletColor.rect.h = 40;
-    secondaryActivePalletColor.rect.w = 40;
+    secondaryActivePalletColor.rect.x = primaryActivePalletColor.rect.x + 15;
+    secondaryActivePalletColor.rect.y = primaryActivePalletColor.rect.y + 15;
+    secondaryActivePalletColor.rect.h = 30;
+    secondaryActivePalletColor.rect.w = 30;
+    secondaryActivePalletColor.color = colorPallet[0][1].color;
 
-    initPallet(&rectToolBar);
 
     if (SDL_Init(SDL_INIT_VIDEO) == -1) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Couldn't initialize SDL!", SDL_GetError(), NULL);
         return SDL_APP_FAILURE;
     }
 
-    if (SDL_CreateWindowAndRenderer("Upixel-Editor", 640, 480, 0, &window, &renderer) == -1) {
+    if (SDL_CreateWindowAndRenderer("Upixel-Editor", 1024, 768, 0, &window, &renderer) == -1) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Couldn't create window/renderer!", SDL_GetError(), NULL);
         return SDL_APP_FAILURE;
     }
@@ -236,16 +282,28 @@ int SDL_AppIterate(void *appstate)
 
         }
     }
-    
-    // desenha o canvas para o pixel-art, a area de desenho vai ter 32x32 para testes  
-    SDL_SetRenderDrawColor(renderer, primaryWhiteColor.r, primaryWhiteColor.g, primaryWhiteColor.b, primaryWhiteColor.a);
-    SDL_RenderFillRect(renderer, &rect);
 
+    //verifica se alguma cor foi escolhida
+    for(int y = 0; y <  8; y+=1 ){
+        for(int x = 0; x <= 1; x+=1 ){
+            if(SDL_PointInRectFloat(&mousePoint,&colorPallet[x][y].rect)){
+                if (mouseButtonsState == SDL_BUTTON_LEFT ){
+                    primaryActivePalletColor.color = colorPallet[x][y].color;
+                }
+                if (mouseButtonsState-1 == SDL_BUTTON_RIGHT ){
+                    secondaryActivePalletColor.color = colorPallet[x][y].color;
+                }
+            }
+        }
+    }
+    
     //desenha o cursor do mouse
     for(int x = 0; x < 32;x+=1){
         for(int y = 0; y < 32; y+=1){
-            
-            if(SDL_PointInRectFloat(&mousePoint,&canvas[x][y].rect)){
+
+            switch (activeTool){
+            case PEN:
+                if(SDL_PointInRectFloat(&mousePoint,&canvas[x][y].rect)){
                 SDL_SetRenderDrawColor(renderer, activeOrangeColor.r, activeOrangeColor.g, activeOrangeColor.b, activeOrangeColor.a);
                 if (mouseButtonsState == SDL_BUTTON_LEFT ){
                     canvas[x][y].color = primaryActivePalletColor.color;
@@ -254,12 +312,17 @@ int SDL_AppIterate(void *appstate)
                 if (mouseButtonsState-1 == SDL_BUTTON_RIGHT ){
                     canvas[x][y].color = secondaryActivePalletColor.color;
                 }
-
-            }else{
+                }else{
                 SDL_SetRenderDrawColor(renderer, canvas[x][y].color.r, canvas[x][y].color.g, canvas[x][y].color.b, canvas[x][y].color.a);
+                }
+                SDL_RenderFillRect(renderer,&canvas[x][y].rect);
+                break;
+            
+            default:
+                break;
             }
-
-            SDL_RenderFillRect(renderer,&canvas[x][y].rect);
+            
+            
         }
     }
 
