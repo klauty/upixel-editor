@@ -8,7 +8,6 @@ typedef struct PalletItem
     SDL_FRect rect;
     SDL_FRect border;
     SDL_Color color;
-    SDL_bool active;
 } PalletItem;
 
 typedef struct Pixel
@@ -100,21 +99,7 @@ SDL_Color activeOrangeColor = {
     .a = 255
 };
 
-
-SDL_Color palletRed = {
-    .r = 255,
-    .g = 0,
-    .b = 77,
-    .a = 255
-};
-
-SDL_Color palletOrange = {
-    .r = 255,
-    .g = 163,
-    .b = 0,
-    .a = 255
-};
-
+//paleta padrão de cores
 SDL_Color endesga16[] = {
                        {.r = 0, .g = 0, .b = 0, .a = 255},
                        {.r = 29, .g = 43, .b = 83, .a = 255},
@@ -171,10 +156,10 @@ void initPallet(SDL_FRect *toolBar, SDL_Color *colors){
     int index = 0;
     for(int y = 0; y < 8; y+=1 ){
         for(int x = 0; x <= 1; x+=1 ){
-                colorPallet[x][y].rect.x =(x*23)+toolBar->x+15;
-                colorPallet[x][y].rect.y =(y*23)+toolBar->y+80;
-                colorPallet[x][y].rect.w = 20;
-                colorPallet[x][y].rect.h = 20;
+                colorPallet[x][y].rect.x =(x*27)+toolBar->x+10;
+                colorPallet[x][y].rect.y =(y*27)+toolBar->y+80;
+                colorPallet[x][y].rect.w = 25;
+                colorPallet[x][y].rect.h = 25;
                 colorPallet[x][y].color = colors[index];
                 index += 1;
                 //SDL_Log("x%f , y%f",colorPallet[x][y].rect.x,colorPallet[x][y].rect.y);
@@ -194,7 +179,7 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
 
     rectToolBar.x = 0;
     rectToolBar.y = 0;
-    rectToolBar.h = 300;
+    rectToolBar.h = 400;
     rectToolBar.w = 70;
     mouseCursor.w = mouseCursor.h = 20;
     initPallet(&rectToolBar,endesga16);
