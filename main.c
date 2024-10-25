@@ -1,17 +1,18 @@
+/* TO DO -
+    Implementar logica para a seleção de ferramentas
+*/
 
 #define SDL_MAIN_USE_CALLBACKS 1  /* use the callbacks instead of main() */
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-typedef struct PalletItem
-{
+typedef struct PalletItem{
     SDL_FRect rect;
     SDL_FRect border;
     SDL_Color color;
 } PalletItem;
 
-typedef struct Pixel
-{
+typedef struct Pixel{
     SDL_FRect rect;
     SDL_Color color;
 }Pixel;
@@ -30,8 +31,30 @@ enum  Tools activeTool = PEN;
 /* We will use this renderer to draw into this window every frame. */
 static SDL_Renderer *renderer = NULL;
 static SDL_Window *window = NULL;
+
+SDL_Surface *penSurface = NULL;
+SDL_Texture *penTexture = NULL;
+
+SDL_Surface *eyeDropperSurface = NULL;
+SDL_Texture *eyeDropperTexture = NULL;
+
+
 SDL_FRect canvasPosition;
 SDL_FRect rectToolBar;
+
+SDL_FRect rectPencil = {
+    .h = 25,
+    .w = 25,
+    .x = 100,
+    .y = 100
+};
+
+SDL_FRect rectEyeDropper = {
+    .h = 25,
+    .w = 25,
+    .x = 130,
+    .y = 100
+};
 
 SDL_FRect mouseCursor;
 float mouseX = 0;
@@ -165,17 +188,19 @@ void initPallet(SDL_FRect *toolBar, SDL_Color *colors){
                 //SDL_Log("x%f , y%f",colorPallet[x][y].rect.x,colorPallet[x][y].rect.y);
         }
     }
-
-   
 }
 
+void initTools(SDL_FRect *toolBar){
+    rectPencil.x = toolBar->x+7;
+    rectPencil.y = toolBar->y+310;
+    rectEyeDropper.x = toolBar->x+35;
+    rectEyeDropper.y = toolBar->y+310;
+};
+
 /* This function runs once at startup. */
-int SDL_AppInit(void **appstate, int argc, char *argv[])
-{
+int SDL_AppInit(void **appstate, int argc, char *argv[]){
     canvasPosition.x = 200; 
     canvasPosition.y = 100;
-    // rect.w = 320;
-    // rect.h = 320;
 
     rectToolBar.x = 0;
     rectToolBar.y = 0;
@@ -183,7 +208,8 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
     rectToolBar.w = 70;
     mouseCursor.w = mouseCursor.h = 20;
     initPallet(&rectToolBar,endesga16);
-
+    initTools(&rectToolBar);
+    
     //posiciona os indicadores de cor primaria e secundaria
     primaryActivePalletColor.rect.x = rectToolBar.x + 10;
     primaryActivePalletColor.rect.y = rectToolBar.y + 10;
@@ -208,20 +234,23 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
         return SDL_APP_FAILURE;
     }
     
+    fillCanvasColor(endesga16[6]);
+
+    penSurface = SDL_LoadBMP("./Icons/pencil.bmp");
+    penTexture = SDL_CreateTextureFromSurface(renderer,penSurface);
     
-    fillCanvasColor(primaryWhiteColor);
-    
+    eyeDropperSurface = SDL_LoadBMP("./Icons/eye_dropper.bmp");
+    eyeDropperTexture =  SDL_CreateTextureFromSurface(renderer, eyeDropperSurface);
     return SDL_APP_CONTINUE;  /* carry on with the program! */
 }
 
 /* This function runs when a new event (mouse input, keypresses, etc) occurs. */
-int SDL_AppEvent(void *appstate, const SDL_Event *event)
-{
+int SDL_AppEvent(void *appstate, const SDL_Event *event){
+    
     if (event->type == SDL_EVENT_QUIT) {
         return SDL_APP_SUCCESS;  /* end the program, reporting success to the OS. */
     }
 
-    
     mouseButtonsState = SDL_GetMouseState(&mousePoint.x,&mousePoint.y);
     if(event->type == SDL_EVENT_MOUSE_MOTION){
 
@@ -231,8 +260,7 @@ int SDL_AppEvent(void *appstate, const SDL_Event *event)
 }
 
 /* This function runs once per frame, and is the heart of the program. */
-int SDL_AppIterate(void *appstate)
-{
+int SDL_AppIterate(void *appstate){
     	
 	/* cor de fundo */
     SDL_SetRenderDrawColor(renderer, secondaryGrayColor.r, secondaryGrayColor.g, secondaryGrayColor.b, secondaryGrayColor.a);
@@ -311,13 +339,20 @@ int SDL_AppIterate(void *appstate)
         }
     }
 
+    SDL_RenderTexture(renderer,penTexture,NULL,&rectPencil);
+    SDL_RenderTexture(renderer,eyeDropperTexture,NULL,&rectEyeDropper);
+
     SDL_RenderPresent(renderer);  /* put it all on the screen! */
     return SDL_APP_CONTINUE;  /* carry on with the program! */
 }
 
 /* This function runs once at shutdown. */
-void SDL_AppQuit(void *appstate)
-{
+void SDL_AppQuit(void *appstate){
     /* SDL will clean up the window/renderer for us. */
+    SDL_DestroySurface(penSurface);
+    penSurface = NULL;
+
+    SDL_DestroyTexture(penTexture);
+    penTexture = NULL;
 }
 
