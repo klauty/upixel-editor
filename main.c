@@ -23,7 +23,7 @@ enum Tools {
     CIRCLE,
     SQUARE,
     LINE,
-    PIKER
+    PICKER
 };
 
 enum  Tools activeTool = PEN;
@@ -32,11 +32,15 @@ enum  Tools activeTool = PEN;
 static SDL_Renderer *renderer = NULL;
 static SDL_Window *window = NULL;
 
-SDL_Surface *penSurface = NULL;
 SDL_Texture *penTexture = NULL;
+SDL_Surface *penSurface = NULL;
+SDL_Surface *penSurfaceAct = NULL;
+SDL_Texture *penTextureAct = NULL;
 
 SDL_Surface *eyeDropperSurface = NULL;
 SDL_Texture *eyeDropperTexture = NULL;
+SDL_Surface *eyeDropperSurfaceAct = NULL;
+SDL_Texture *eyeDropperTextureAct = NULL;
 
 
 SDL_FRect canvasPosition;
@@ -238,9 +242,14 @@ int SDL_AppInit(void **appstate, int argc, char *argv[]){
 
     penSurface = SDL_LoadBMP("./Icons/pencil.bmp");
     penTexture = SDL_CreateTextureFromSurface(renderer,penSurface);
+    penSurfaceAct = SDL_LoadBMP("./Icons/pencil_ac.bmp");
+    penTextureAct = SDL_CreateTextureFromSurface(renderer,penSurfaceAct);
     
+
     eyeDropperSurface = SDL_LoadBMP("./Icons/eye_dropper.bmp");
     eyeDropperTexture =  SDL_CreateTextureFromSurface(renderer, eyeDropperSurface);
+    eyeDropperSurfaceAct = SDL_LoadBMP("./Icons/eye_dropper_ac.bmp");
+    eyeDropperTextureAct =  SDL_CreateTextureFromSurface(renderer, eyeDropperSurfaceAct);
     return SDL_APP_CONTINUE;  /* carry on with the program! */
 }
 
@@ -310,37 +319,75 @@ int SDL_AppIterate(void *appstate){
         }
     }
     
-    //desenha o cursor do mouse
+    //scan principal do canvas
     for(int x = 0; x < 32;x+=1){
         for(int y = 0; y < 32; y+=1){
+            //desenha o canvas do pixel art
+            SDL_SetRenderDrawColor(renderer, canvas[x][y].color.r, canvas[x][y].color.g, canvas[x][y].color.b, canvas[x][y].color.a);
+            SDL_RenderFillRect(renderer,&canvas[x][y].rect);
 
-            switch (activeTool){
-            case PEN:
-                if(SDL_PointInRectFloat(&mousePoint,&canvas[x][y].rect)){
+            //desenha o cursor do mouse
+            if(SDL_PointInRectFloat(&mousePoint,&canvas[x][y].rect)){
                 SDL_SetRenderDrawColor(renderer, activeOrangeColor.r, activeOrangeColor.g, activeOrangeColor.b, activeOrangeColor.a);
-                if (mouseButtonsState == SDL_BUTTON_LEFT ){
-                    canvas[x][y].color = primaryActivePalletColor.color;
-                }
-
-                if (mouseButtonsState-1 == SDL_BUTTON_RIGHT ){
-                    canvas[x][y].color = secondaryActivePalletColor.color;
-                }
-                }else{
-                SDL_SetRenderDrawColor(renderer, canvas[x][y].color.r, canvas[x][y].color.g, canvas[x][y].color.b, canvas[x][y].color.a);
-                }
                 SDL_RenderFillRect(renderer,&canvas[x][y].rect);
-                break;
             
-            default:
-                break;
+            
+                switch (activeTool){
+                    case PEN:
+                        if (mouseButtonsState == SDL_BUTTON_LEFT ){
+                            canvas[x][y].color = primaryActivePalletColor.color;
+                        }
+
+                        if (mouseButtonsState-1 == SDL_BUTTON_RIGHT ){
+                            canvas[x][y].color = secondaryActivePalletColor.color;
+                        }
+                        break;
+                    case PICKER:
+                        if (mouseButtonsState == SDL_BUTTON_LEFT ){
+                                primaryActivePalletColor.color = canvas[x][y].color;
+                            }
+
+                            if (mouseButtonsState-1 == SDL_BUTTON_RIGHT ){
+                                secondaryActivePalletColor.color = canvas[x][y].color;
+                            }
+
+                            break;
+                    default:
+                    break;
+                }
             }
-            
-            
         }
     }
 
+
     SDL_RenderTexture(renderer,penTexture,NULL,&rectPencil);
     SDL_RenderTexture(renderer,eyeDropperTexture,NULL,&rectEyeDropper);
+
+    if(SDL_PointInRectFloat(&mousePoint,&rectPencil)){
+        if (mouseButtonsState == SDL_BUTTON_LEFT ){
+            activeTool = PEN;   
+        }
+    }
+
+    if(SDL_PointInRectFloat(&mousePoint,&rectEyeDropper)){
+        if (mouseButtonsState == SDL_BUTTON_LEFT ){
+            activeTool = PICKER;
+        }
+    }
+
+    switch (activeTool){
+    case PEN:
+        SDL_RenderTexture(renderer,penTextureAct,NULL,&rectPencil);
+        break;
+    
+    case PICKER:
+        SDL_RenderTexture(renderer,eyeDropperTextureAct,NULL,&rectEyeDropper);
+        break;
+    
+    default:
+        break;
+    }    
+
 
     SDL_RenderPresent(renderer);  /* put it all on the screen! */
     return SDL_APP_CONTINUE;  /* carry on with the program! */
@@ -351,8 +398,21 @@ void SDL_AppQuit(void *appstate){
     /* SDL will clean up the window/renderer for us. */
     SDL_DestroySurface(penSurface);
     penSurface = NULL;
-
     SDL_DestroyTexture(penTexture);
     penTexture = NULL;
+    SDL_DestroySurface(penSurfaceAct);
+    penSurfaceAct = NULL;
+    SDL_DestroyTexture(penTextureAct);
+    penTextureAct = NULL;
+
+    SDL_DestroySurface(eyeDropperSurface);
+    eyeDropperSurface = NULL;
+    SDL_DestroyTexture(eyeDropperTexture);
+    eyeDropperTexture = NULL;
+    SDL_DestroySurface(eyeDropperSurfaceAct);
+    eyeDropperSurfaceAct = NULL;
+    SDL_DestroyTexture(eyeDropperTextureAct);
+    eyeDropperTextureAct = NULL;
+    
 }
 
